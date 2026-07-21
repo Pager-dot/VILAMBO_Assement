@@ -15,7 +15,7 @@ AI Agent Developer Intern role at Vilambo Private Limited.
   - Dev/testing: `gemini-2.5-flash-lite` (cheap)
   - Demo/quality runs: `gemini-2.5-flash` or `gemini-flash-latest`
   - Model name must be read from an env var, never hardcoded, so it's easy to swap per node
-- **PDF → text:** `marker` (marker-pdf)
+- **PDF → text:** `docling` (swapped from `marker-pdf`, which fails to build on Python 3.14 here)
 - **Structured outputs:** Pydantic models passed to `.with_structured_output(...)`
 - **Secrets:** `.env` + `python-dotenv`, `.env` in `.gitignore`, never hardcoded
 
@@ -37,7 +37,7 @@ AI Agent Developer Intern role at Vilambo Private Limited.
 ## Workflow / Graph Shape
 
 ```
-Input (PDF/text) → marker extraction
+Input (PDF/text) → docling extraction
   → Paper Analyzer → Review → (retry analyzer | proceed)
   → fan out: Summary Generator, Citation Extractor (parallel)
        each → its own Review pass → (retry that agent | proceed)
@@ -68,7 +68,7 @@ class ResearchState(TypedDict):
   doubles as the iteration-history evidence for the video/README.
 - Prefer small, testable node functions: `(state) -> partial_state_update`.
 - Long papers: guard against blowing the context window — truncate/chunk before
-  sending to the LLM if `marker` output is very large.
+  sending to the LLM if `docling` output is very large.
 - README must include: setup steps, an architecture diagram (generate via
   `graph.get_graph().draw_mermaid()` off the real graph, not hand-drawn), a sample
   input/output pair committed to the repo, and a "Known Limitations" section.

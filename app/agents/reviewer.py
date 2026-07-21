@@ -3,7 +3,12 @@ from typing import Callable
 
 from langgraph.types import Send
 
-from app.config import MAX_RETRIES_PER_FIELD, REVIEW_PASS_THRESHOLD, REVIEWER_MODEL
+from app.config import (
+    MAX_CONTEXT_CHARS,
+    MAX_RETRIES_PER_FIELD,
+    REVIEW_PASS_THRESHOLD,
+    REVIEWER_MODEL,
+)
 from app.graph.state import ResearchState
 from app.schemas.models import ReviewOutput
 from app.utils.llm import get_llm, invoke_with_retry
@@ -11,13 +16,19 @@ from app.utils.llm import get_llm, invoke_with_retry
 logger = logging.getLogger(__name__)
 
 REVIEW_PROMPT = """You are reviewing the "{field}" output of a research paper analysis \
-pipeline for quality and accuracy.
+pipeline for accuracy, completeness, and clarity.
+
+Source paper (ground truth — the output must be checked against this, not just judged \
+on its own):
+{source}
 
 Content to review:
 {content}
 
-Score it from 1 (poor) to 10 (excellent) on accuracy, completeness, and clarity for \
-the "{field}" task, and give brief, actionable feedback.
+Score it from 1 (poor) to 10 (excellent). Treat any claim in the content that is not \
+supported by, or contradicts, the source paper as a serious accuracy problem and reflect \
+that in the score. Give brief, actionable feedback, calling out any specific claim that \
+doesn't match the source.
 """
 
 
@@ -29,8 +40,9 @@ def build_review_node(
 
     def review_node(state: ResearchState) -> dict:
         content = content_getter(state)
+        source = state["paper_text"][:MAX_CONTEXT_CHARS]
         llm = get_llm(REVIEWER_MODEL).with_structured_output(ReviewOutput)
-        prompt = REVIEW_PROMPT.format(field=field, content=content)
+        prompt = REVIEW_PROMPT.format(field=field, content=content, source=source)
         result: ReviewOutput = invoke_with_retry(llm, prompt)
         passed = result.score >= REVIEW_PASS_THRESHOLD
 
