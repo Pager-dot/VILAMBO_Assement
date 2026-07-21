@@ -102,6 +102,26 @@ python -m app.main samples/input/2607.18100v1.pdf -o samples/output/2607.18100v1
 python -m app.main samples/input/attention_is_all_you_need.txt
 ```
 
+## Web UI
+
+A React frontend (in `frontend/`) wraps the pipeline: upload a PDF, paste a
+paper URL, or paste raw text, then watch the agents run live — which agent is
+currently active, each review score, the full retry/iteration history, and the
+final brief. It talks to a FastAPI server (`app/server.py`) that streams agent
+progress over Server-Sent Events.
+
+```bash
+# terminal 1 — API (streams live agent progress)
+# NB: run via `python3 -m uvicorn` so it uses the interpreter your deps are
+# installed under — a bare `uvicorn` may resolve to a different Python.
+python3 -m uvicorn app.server:app --reload --port 8000
+
+# terminal 2 — UI
+cd frontend && npm install && npm run dev   # http://localhost:5173
+```
+
+See [`frontend/README.md`](frontend/README.md) for details.
+
 Logging is at INFO level on every node entry/exit, including review scores and retry
 counts — this is the audit trail for how many iterations each field went through.
 
@@ -117,7 +137,10 @@ counts — this is the audit trail for how many iterations each field went throu
   agent (actionable takeaways / practical implications). Deferred to keep the required
   architecture (Boss + 3 sub-agents + Review) solid rather than half-covering a fourth.
   The state/schema design would extend cleanly to add it as a fourth parallel branch.
-- **No UI.** Optional/bonus per the assignment; not built in this pass.
+- **UI is dev-oriented.** The React frontend + FastAPI server (see [Web UI](#web-ui))
+  cover upload/URL/paste, live agent progress, review scores, iteration history,
+  and the final brief. Runs as two local processes with a Vite dev proxy; not
+  yet packaged as a single deployable service.
 - **PDF extraction uses `docling`, not `marker-pdf`.** `marker-pdf` pins an older Pillow
   that fails to compile from source on Python 3.14; `docling` was swapped in and verified
   working end-to-end. It's heavier (pulls in layout/table/OCR models and downloads weights

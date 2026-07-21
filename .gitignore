@@ -7,3 +7,9 @@ venv/
 .pytest_cache/
 .DS_Store
 AI Agent Developer Intern Technical Assignment-Brief.pdf
+
+# frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+samples/
