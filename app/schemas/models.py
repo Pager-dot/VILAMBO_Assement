@@ -28,6 +28,10 @@ class SummaryOutput(BaseModel):
     summary: str
 
 
+class KeyInsightsOutput(BaseModel):
+    insights: list[str]
+
+
 # passed/fail is computed in code from the configured threshold, not trusted from the LLM
 class ReviewOutput(BaseModel):
     score: int = Field(ge=1, le=10)
@@ -39,6 +43,7 @@ class ResearchBrief(BaseModel):
     analysis: PaperAnalysis
     summary: str
     citations: list[Citation]
+    insights: list[str] = Field(default_factory=list)
     review_scores: dict[str, int]
     review_feedback: dict[str, str]
     flags: list[str] = Field(default_factory=list)

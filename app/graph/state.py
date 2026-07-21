@@ -12,6 +12,7 @@ class ResearchState(TypedDict):
     analysis: dict | None
     summary: str | None
     citations: list | None
+    insights: list | None
     # Summary and citation branches run in parallel and both write into these dicts —
     # a plain overwrite reducer would let one branch's write clobber the other's.
     review_scores: Annotated[dict, merge_dicts]

@@ -2,8 +2,8 @@
 
 AI-powered multi-agent system that reads a research paper (PDF or text) and produces a
 structured research brief: metadata, methodology/findings analysis, an executive summary,
-and organized citations — each stage quality-checked and retried automatically before the
-final brief is assembled.
+organized citations, and actionable key insights — each stage quality-checked and retried
+automatically before the final brief is assembled.
 
 Built for the Vilambo Private Limited AI Agent Developer Intern technical assignment.
 
@@ -11,7 +11,7 @@ Built for the Vilambo Private Limited AI Agent Developer Intern technical assign
 
 Built with [LangGraph](https://github.com/langchain-ai/langgraph) as a state graph — not a
 linear script. A **Boss Agent** (a deterministic combiner node, no LLM call needed for pure
-assembly) orchestrates three specialized sub-agents, each gated by a shared, generic
+assembly) orchestrates four specialized sub-agents, each gated by a shared, generic
 **Review Agent** that scores outputs 1–10 and triggers retries below threshold.
 
 ```mermaid
@@ -24,17 +24,23 @@ graph TD;
 	review_summary(review_summary)
 	citation_extractor(citation_extractor)
 	review_citations(review_citations)
+	key_insights(key_insights)
+	review_insights(review_insights)
 	boss(boss)
 	__end__([<p>__end__</p>]):::last
 	__start__ --> metadata;
 	analyzer --> review_analysis;
 	citation_extractor --> review_citations;
+	key_insights --> review_insights;
 	metadata --> analyzer;
 	review_analysis -.-> analyzer;
 	review_analysis -.-> citation_extractor;
+	review_analysis -.-> key_insights;
 	review_analysis -.-> summarizer;
 	review_citations -.-> boss;
 	review_citations -.-> citation_extractor;
+	review_insights -.-> boss;
+	review_insights -.-> key_insights;
 	review_summary -.-> boss;
 	review_summary -.-> summarizer;
 	summarizer --> review_summary;
@@ -53,8 +59,8 @@ retry/proceed routing chosen at runtime based on review scores.
 **Flow:**
 1. `metadata` — one-shot extraction of title/authors/year/venue (not review-gated; low-stakes factual lookup)
 2. `analyzer` → `review_analysis` — extracts methodology/hypothesis/experiments/findings, scored against the source paper; retries (max 2) if score < 7
-3. Once analysis passes (or exhausts retries), it fans out in parallel to `summarizer` and `citation_extractor`, each with its own independent review/retry loop
-4. Both branches converge on `boss`, which deterministically assembles the final markdown brief — no LLM call needed for pure combination
+3. Once analysis passes (or exhausts retries), it fans out in parallel to `summarizer`, `citation_extractor`, and `key_insights`, each with its own independent review/retry loop
+4. All three branches converge on `boss`, which deterministically assembles the final markdown brief — no LLM call needed for pure combination
 5. Any field that never passes review after its retry budget is flagged in the final brief rather than looping forever
 
 ### Agents
@@ -65,6 +71,7 @@ retry/proceed routing chosen at runtime based on review scores.
 | Paper Analyzer | `app/agents/analyzer.py` | Extracts methodology, hypothesis, experiments, key findings |
 | Summary Generator | `app/agents/summarizer.py` | 150–200 word executive summary (problem, approach, results) |
 | Citation Extractor | `app/agents/citations.py` | All citations/references + flags key related work |
+| Key Insights | `app/agents/insights.py` | Actionable takeaways, practical implications, and potential applications |
 | Review Agent | `app/agents/reviewer.py` | **One** generic, reusable node parameterized by which field it's reviewing — not four separate review agents. Scores against the *source paper* (not just the output in isolation), returns `{score, feedback}`; threshold ≥7 passes, max 2 retries per field |
 | Metadata | `app/agents/metadata.py` | One-shot title/authors/year/venue extraction (not review-gated) |
 
@@ -133,10 +140,6 @@ counts — this is the audit trail for how many iterations each field went throu
 
 ## Known Limitations
 
-- **Key Insights Agent not implemented.** The assignment marks this as an optional bonus
-  agent (actionable takeaways / practical implications). Deferred to keep the required
-  architecture (Boss + 3 sub-agents + Review) solid rather than half-covering a fourth.
-  The state/schema design would extend cleanly to add it as a fourth parallel branch.
 - **UI is dev-oriented.** The React frontend + FastAPI server (see [Web UI](#web-ui))
   cover upload/URL/paste, live agent progress, review scores, iteration history,
   and the final brief. Runs as two local processes with a Vite dev proxy; not
@@ -153,6 +156,6 @@ counts — this is the audit trail for how many iterations each field went throu
   even with billing enabled — this isn't a quota issue, the models are retired for new
   projects. `.env.example` documents which model names are confirmed working and how to
   check what's available on a given key.
-- **No automated test suite yet** — `tests/` is scaffolded but empty. Validation so far has
-  been manual end-to-end runs (small text sample + real PDF) plus a mocked-LLM run to
-  verify the retry-cap/fan-out/fan-in logic in isolation.
+- **No automated test suite.** Validation so far has been manual end-to-end runs (small
+  text sample + real PDF), which exercise the retry-cap / fan-out / fan-in logic — e.g. the
+  key-insights branch reliably triggers a real review-and-retry cycle on the sample paper.

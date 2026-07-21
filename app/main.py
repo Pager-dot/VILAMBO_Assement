@@ -19,6 +19,7 @@ def run(input_path: str, output_path: str | None) -> str:
         "analysis": None,
         "summary": None,
         "citations": None,
+        "insights": None,
         "review_scores": {},
         "review_feedback": {},
         "retry_counts": {},

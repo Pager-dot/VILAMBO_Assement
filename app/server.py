@@ -47,6 +47,8 @@ NODES = [
     {"id": "review_summary", "label": "Review · Summary", "role": "Scores summary vs. source paper", "kind": "reviewer", "reviews": "summary"},
     {"id": "citation_extractor", "label": "Citation Extractor", "role": "All references + key related work", "kind": "subagent", "reviews": None},
     {"id": "review_citations", "label": "Review · Citations", "role": "Scores citations vs. source paper", "kind": "reviewer", "reviews": "citations"},
+    {"id": "key_insights", "label": "Key Insights", "role": "Actionable takeaways & implications", "kind": "subagent", "reviews": None},
+    {"id": "review_insights", "label": "Review · Insights", "role": "Scores insights vs. source paper", "kind": "reviewer", "reviews": "insights"},
     {"id": "boss", "label": "Boss Orchestrator", "role": "Assembles the final brief (no LLM)", "kind": "boss", "reviews": None},
 ]
 
@@ -130,6 +132,7 @@ def _run_stream(paper_text: str):
         "analysis": None,
         "summary": None,
         "citations": None,
+        "insights": None,
         "review_scores": {},
         "review_feedback": {},
         "retry_counts": {},

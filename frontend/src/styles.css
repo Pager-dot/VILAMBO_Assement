@@ -133,13 +133,59 @@ body::before {
   border-top: 1px solid var(--rule);
   display: flex;
   justify-content: center;
-  gap: 22px;
+  gap: 14px;
   flex-wrap: wrap;
   font-family: var(--mono);
   font-size: 11.5px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink-faint);
+}
+.config-badges .badge:not(:first-child)::before {
+  content: "·";
+  margin-right: 14px;
+  color: var(--rule-strong);
+}
+
+/* ---------- Tooltip (data-tip on any element) ---------- */
+[data-tip] {
+  position: relative;
+  cursor: help;
+  text-underline-offset: 3px;
+  text-decoration: underline dotted var(--rule-strong);
+  outline: none;
+}
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  transform: translateX(-50%) translateY(4px);
+  width: max-content;
+  max-width: 280px;
+  z-index: 30;
+  background: var(--ink);
+  color: var(--paper-2);
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 12.5px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  padding: 10px 13px;
+  border-radius: var(--radius);
+  box-shadow: 0 12px 30px -12px rgba(35, 25, 10, 0.6);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+}
+[data-tip]:hover::after,
+[data-tip]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 .badge strong {
   color: var(--oxblood);
@@ -380,7 +426,7 @@ main.wrap {
 }
 .branch-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 18px;
 }
 .branch {
@@ -626,7 +672,7 @@ main.wrap {
 /* ---------- Review panel ---------- */
 .score-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 0;
   border: 1px solid var(--ink);
   border-radius: var(--radius);

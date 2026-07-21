@@ -27,6 +27,9 @@ def _to_markdown(brief: ResearchBrief) -> str:
         "**Key Findings:**",
         *[f"- {finding}" for finding in brief.analysis.key_findings],
         "",
+        "## Key Insights",
+        *[f"- {insight}" for insight in brief.insights],
+        "",
         "## Citations",
         *[
             f"- {'**[key]** ' if c.is_key_related_work else ''}{c.text}"
@@ -53,6 +56,7 @@ def boss_node(state: ResearchState) -> dict:
         analysis=PaperAnalysis(**state["analysis"]),
         summary=state["summary"],
         citations=[Citation(**c) for c in state["citations"]],
+        insights=state["insights"] or [],
         review_scores=state["review_scores"],
         review_feedback=state["review_feedback"],
         flags=state["flags"],

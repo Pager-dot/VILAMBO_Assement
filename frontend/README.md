@@ -10,8 +10,8 @@ retry/iteration history, and the final assembled brief.
 - **Input** — drag-and-drop PDF/`.txt`, a paper URL (arXiv `/abs/` links are
   auto-resolved to the PDF), or pasted text.
 - **Agent workflow** — the live LangGraph pipeline (metadata → analyzer →
-  parallel summary & citation branches → boss), each node lighting up as it
-  runs, with a `×N` badge when a sub-agent is retried.
+  parallel summary, citation & key-insights branches → boss), each node lighting
+  up as it runs, with a `×N` badge when a sub-agent is retried.
 - **Review & iterations** — per-field scores (pass ≥ 7/10), a chronological
   timeline of every review attempt with its feedback, and any flags raised when
   a field exhausts its retry budget.

@@ -88,9 +88,13 @@ def build_review_router(field: str, retry_target: str, proceed_target):
 
 
 def route_after_analysis_review(state: ResearchState) -> str | list[Send]:
-    """Router for the analysis stage, which fans out to the two parallel branches
+    """Router for the analysis stage, which fans out to the parallel branches
     once analysis passes (or its retry budget is exhausted)."""
-    fan_out = [Send("summarizer", state), Send("citation_extractor", state)]
+    fan_out = [
+        Send("summarizer", state),
+        Send("citation_extractor", state),
+        Send("key_insights", state),
+    ]
 
     if state["review_scores"].get("analysis", 0) >= REVIEW_PASS_THRESHOLD:
         return fan_out

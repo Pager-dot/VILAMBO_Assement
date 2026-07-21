@@ -2,10 +2,11 @@ const FIELD_LABEL = {
   analysis: "Analysis",
   summary: "Summary",
   citations: "Citations",
+  insights: "Key Insights",
 };
 
 export default function ReviewPanel({ history, scores, threshold, flags }) {
-  const fields = ["analysis", "summary", "citations"];
+  const fields = ["analysis", "summary", "citations", "insights"];
 
   return (
     <section className="card review-card">

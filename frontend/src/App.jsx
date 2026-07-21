@@ -10,6 +10,7 @@ const PRODUCER_NODES = new Set([
   "analyzer",
   "summarizer",
   "citation_extractor",
+  "key_insights",
 ]);
 
 export default function App() {
@@ -141,12 +142,19 @@ export default function App() {
             <p>A multi-agent reading pipeline — orchestrator &amp; review-gated sub-agents</p>
           </div>
           <div className="config-badges">
-            <span className="badge">Vol. 1 — LangGraph edition</span>
-            <span className="badge">
-              acceptance ≥ <strong>{threshold}</strong>/10
+            <span
+              className="badge"
+              tabIndex={0}
+              data-tip={`The Review agent scores each output 1–10 against the source paper. Anything below ${threshold} is sent back to its sub-agent for another attempt.`}
+            >
+              Review threshold <strong>{threshold}</strong>/10
             </span>
-            <span className="badge">
-              up to <strong>{config.max_retries}</strong> revisions
+            <span
+              className="badge"
+              tabIndex={0}
+              data-tip={`Each field gets at most ${config.max_retries} revisions. If it still hasn't reached the threshold, it's flagged in the brief instead of looping forever.`}
+            >
+              Max <strong>{config.max_retries}</strong> retries per field
             </span>
           </div>
         </div>
@@ -189,8 +197,8 @@ export default function App() {
       </main>
 
       <footer className="foot">
-        Prepared for the Vilambo AI Agent Developer Intern assignment · Set in a
-        multi-agent pipeline of LangGraph, FastAPI &amp; React
+        Built for the Vilambo AI Agent Developer Intern assignment · LangGraph ·
+        FastAPI · React
       </footer>
     </div>
   );

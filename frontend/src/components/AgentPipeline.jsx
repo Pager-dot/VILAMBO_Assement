@@ -77,6 +77,14 @@ export default function AgentPipeline({ nodes, nodeState, scores, threshold, pha
                 {card("review_citations")}
               </div>
             </div>
+            <div className="branch">
+              <span className="branch-tag">Key-insights branch</span>
+              <div className="stage-row">
+                {card("key_insights")}
+                <MiniArrow />
+                {card("review_insights")}
+              </div>
+            </div>
           </div>
         </div>
 
