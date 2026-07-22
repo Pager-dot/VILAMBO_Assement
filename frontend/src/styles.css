@@ -992,21 +992,8 @@ main.wrap {
   width: calc(100% - 60px);
 }
 
-/* ---------- Workspace: source viewer + execution ---------- */
-.workspace {
-  display: grid;
-  grid-template-columns: minmax(320px, 42%) 1fr;
-  gap: 28px;
-  align-items: start;
-}
-.workcol {
-  display: flex;
-  flex-direction: column;
-  gap: 34px;
-  min-width: 0; /* let children shrink instead of overflowing the grid */
-}
-
-/* Source viewer — sticky so the paper stays in view while you scroll results */
+/* ---------- Source viewer (shown in the result view) ---------- */
+/* Sticky so the paper stays in view while you scroll the brief beside it. */
 .viewer-card {
   position: sticky;
   top: 20px;
@@ -1046,32 +1033,12 @@ main.wrap {
   text-decoration: none;
 }
 
-/* ---------- Stage stepper ---------- */
-.stepper-card {
-  padding: 22px 24px;
-}
-.stepper {
-  display: flex;
-  align-items: stretch;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+/* ---------- Stepper bits (shared by the runner modal's stage tracker) ---------- */
 .step-group {
   display: flex;
   align-items: center;
   gap: 6px;
   flex: 1 1 auto;
-}
-.step {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 13px;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  background: var(--paper-3);
-  flex: 1;
-  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
 }
 .step-num {
   width: 22px;
@@ -1085,34 +1052,6 @@ main.wrap {
   border: 1px solid currentColor;
   transition: transform 0.25s ease;
 }
-.step-label {
-  font-family: var(--serif);
-  font-size: 14px;
-  line-height: 1.2;
-}
-.step.status-pending {
-  color: var(--ink-ghost);
-  opacity: 0.75;
-}
-.step.status-running {
-  color: var(--oxblood);
-  border-color: var(--oxblood);
-  background: var(--oxblood-wash);
-  box-shadow: -3px 0 0 var(--oxblood);
-  animation: stepPulse 1.5s ease-in-out infinite;
-}
-.step.status-running .step-num {
-  animation: numPop 1.5s ease-in-out infinite;
-}
-.step.status-done {
-  color: var(--forest);
-  border-color: var(--forest);
-}
-.step.status-done .step-num {
-  background: var(--forest);
-  color: var(--paper-3);
-  border-color: var(--forest);
-}
 .step-arrow {
   font-family: var(--mono);
   font-size: 16px;
@@ -1122,20 +1061,6 @@ main.wrap {
 }
 .step-arrow.lit {
   color: var(--forest);
-}
-
-.progress-track {
-  margin-top: 16px;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--rule);
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--oxblood), var(--forest));
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ---------- Minimal animations ---------- */
@@ -1169,7 +1094,6 @@ main.wrap {
 }
 
 .viewer-card,
-.stepper-card,
 .pipeline-card,
 .review-card,
 .brief-card {
@@ -1191,9 +1115,6 @@ main.wrap {
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
-  .workspace {
-    grid-template-columns: 1fr;
-  }
   .viewer-card {
     position: static;
   }
@@ -1511,19 +1432,6 @@ main.wrap {
   .result-grid .viewer-card {
     position: static;
   }
-}
-
-.result-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.ghost-btn.accent {
-  color: var(--oxblood);
-  border-color: var(--oxblood);
-}
-.ghost-btn.accent:hover {
-  background: var(--oxblood-wash);
 }
 
 /* ---------- Ask: floating toolbar on text selection ---------- */

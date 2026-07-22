@@ -1,3 +1,6 @@
+// ReviewPanel — the quality-control view: the latest 1–10 score per field, the
+// full revision timeline (every review attempt + its feedback), and any flags
+// raised when a field exhausted its retry budget.
 const FIELD_LABEL = {
   analysis: "Analysis",
   summary: "Summary",

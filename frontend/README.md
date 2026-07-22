@@ -9,13 +9,17 @@ retry/iteration history, and the final assembled brief.
 
 - **Input** — drag-and-drop PDF/`.txt`, a paper URL (arXiv `/abs/` links are
   auto-resolved to the PDF), or pasted text.
-- **Agent workflow** — the live LangGraph pipeline (metadata → analyzer →
-  parallel summary, citation & key-insights branches → boss), each node lighting
-  up as it runs, with a `×N` badge when a sub-agent is retried.
-- **Review & iterations** — per-field scores (pass ≥ 7/10), a chronological
-  timeline of every review attempt with its feedback, and any flags raised when
-  a field exhausts its retry budget.
-- **Research brief** — the final markdown, rendered or raw, copy/download-able.
+- **Guided run** (`RunnerModal`) — a popup steps through the four stages
+  (Metadata → Analyze & Review → Summarize · Cite · Insights → Assemble), showing
+  the agent currently processing and a `×N` badge when a sub-agent is retried,
+  then a peer-review summary (scores + revision timeline).
+- **Result** (`ResultView`) — the source paper (`SourceViewer`, native PDF render)
+  and the generated brief (`BriefView`) shown side by side.
+- **Grounded Q&A** (`AskPanel`) — highlight text in the brief for a floating
+  Ask / Explain toolbar; answers come strictly from the source paper.
+- **Execution details** — re-open the full pipeline (`AgentPipeline` +
+  `ReviewPanel`): per-field scores (pass ≥ 7/10), every review attempt with its
+  feedback, and any flags raised when a field exhausts its retry budget.
 
 ## Architecture
 
@@ -53,23 +57,29 @@ backend on `:8000`, so there's nothing else to configure.
 
 ```bash
 npm run build      # outputs to frontend/dist/
-npm run preview    # serve the build locally
+npm run preview    # serve the build locally (uses .env.production → deployed backend)
 ```
 
-For a real deployment, serve `dist/` from any static host and point it at the
-FastAPI service (the backend already sends permissive CORS headers).
+`npm run build`/`preview` read `.env.production`, which sets `VITE_API_BASE` to the
+deployed backend URL so the built site calls it directly. In dev that var is unset
+and the Vite proxy forwards `/api` to `localhost:8000`. Deploy `dist/` to any static
+host; the backend sends permissive CORS headers.
 
 ## Structure
 
 ```
 src/
-  App.jsx                  state + SSE event handling
-  api.js                   fetch + SSE stream parser
+  App.jsx                  UI state machine + SSE event handling
+  api.js                   fetch + SSE stream parser + askQuestion()
   components/
     InputPanel.jsx         upload / URL / paste
-    AgentPipeline.jsx      the visual workflow
+    RunnerModal.jsx        the guided popup: stage stepper + live agent detail
+    ResultView.jsx         source paper ‖ brief, side by side
+    SourceViewer.jsx       native PDF render / text preview of the source
+    BriefView.jsx          rendered / raw brief + text-selection Ask toolbar
+    AskPanel.jsx           grounded Q&A chat over the paper
+    AgentPipeline.jsx      detailed agent/sub-agent diagram (in "view details")
     AgentCard.jsx          one agent node (status, score, retry badge)
     ReviewPanel.jsx        score tiles + iteration timeline + flags
-    BriefView.jsx          rendered / raw markdown output
   styles.css               all styling (no CSS framework)
 ```

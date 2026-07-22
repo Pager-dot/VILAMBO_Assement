@@ -78,9 +78,9 @@ retry/proceed routing chosen at runtime based on review scores.
 ### State
 
 `app/graph/state.py` — a `TypedDict` (`ResearchState`) with merge-reducers on the dicts/list
-that the parallel summary and citation branches both write into (`review_scores`,
-`review_feedback`, `retry_counts`, `flags`), since a plain overwrite reducer would let one
-parallel branch's write clobber the other's.
+that the three parallel branches (summary, citations, insights) all write into
+(`review_scores`, `review_feedback`, `retry_counts`, `flags`), since a plain overwrite
+reducer would let one parallel branch's write clobber another's.
 
 ## Setup
 
@@ -111,18 +111,33 @@ python -m app.main samples/input/attention_is_all_you_need.txt
 
 ## Web UI
 
-A React frontend (in `frontend/`) wraps the pipeline: upload a PDF, paste a
-paper URL, or paste raw text, then watch the agents run live in a stepped popup —
-which agent is currently active, each review score, the full retry/iteration
-history — before the final brief and source paper are shown side by side. It
-talks to a FastAPI server (`app/server.py`) that streams agent progress over
-Server-Sent Events.
+A React frontend (in `frontend/`) talks to a FastAPI server (`app/server.py`) that
+streams the pipeline over Server-Sent Events. What you get:
 
-You can also **ask grounded questions** about the analyzed paper: highlight any
-text in the brief (or use the "Ask about the paper" button) and the answer comes
-back strictly from the source paper via the `POST /api/ask` endpoint
-(`app/agents/qa.py`) — the frontend keeps the extracted text it received on the
-stream's `final` event, so Q&A needs no server-side session state.
+- **Submit** a paper by uploading a PDF/`.txt`, pasting a URL (arXiv `/abs/` links
+  auto-resolve to the PDF), or pasting raw text.
+- **Guided run** — a popup steps through the four stages (**Metadata → Analyze &
+  Review → Summarize · Cite · Insights → Assemble**), showing which agent is
+  processing, then a peer-review summary (scores + revision history).
+- **Result** — the source paper and generated brief shown **side by side** (the PDF
+  renders in the browser's native viewer; text/URL inputs show their text).
+- **Grounded Q&A** — highlight any text in the brief and a floating toolbar offers
+  **Ask** / **Explain**; answers come back strictly from the source paper via
+  `POST /api/ask` (`app/agents/qa.py`). The frontend keeps the extracted text it
+  received on the stream's `final` event, so Q&A needs **no server-side session
+  state**.
+- **"View execution details"** re-opens the full agent/sub-agent pipeline and the
+  complete review/iteration history on demand.
+
+### Endpoints (`app/server.py`)
+
+| Method / path | Purpose |
+|---|---|
+| `GET /api/graph` | Static description of the pipeline nodes (drives the UI diagram) |
+| `POST /api/analyze` | Runs the graph, streams progress as SSE (`node_running` / `node_done` / `final`) |
+| `POST /api/ask` | Grounded Q&A over an already-analyzed paper (stateless) |
+
+### Run it locally
 
 ```bash
 # terminal 1 — API (streams live agent progress)
@@ -130,14 +145,29 @@ stream's `final` event, so Q&A needs no server-side session state.
 # installed under — a bare `uvicorn` may resolve to a different Python.
 python3 -m uvicorn app.server:app --reload --port 8000
 
-# terminal 2 — UI
+# terminal 2 — UI (proxies /api to :8000 in dev)
 cd frontend && npm install && npm run dev   # http://localhost:5173
 ```
 
-See [`frontend/README.md`](frontend/README.md) for details.
+See [`frontend/README.md`](frontend/README.md) for the component layout.
 
 Logging is at INFO level on every node entry/exit, including review scores and retry
 counts — this is the audit trail for how many iterations each field went through.
+
+## Deployment
+
+The backend is deployed on [Render](https://render.com) as a Python web service and
+the frontend as a static site.
+
+- **`render.yaml`** — Blueprint for the backend service (build/start commands, health
+  check, env vars). `GOOGLE_API_KEY` is set in the dashboard as a secret.
+- **`runtime.txt`** — pins Python 3.12 for reliable wheels.
+- **Backend** — build `pip install -r requirements.txt`, start
+  `uvicorn app.server:app --host 0.0.0.0 --port $PORT`. Uses the light `pypdf`
+  backend so it fits a small/free instance (see limitations).
+- **Frontend** — a Vite static build (`frontend/`, publish `dist`). The backend URL
+  is baked in at build time via `VITE_API_BASE` (`frontend/.env.production`); in dev
+  that var is unset and the Vite proxy forwards `/api` to `localhost:8000` instead.
 
 ## Sample input/output
 
@@ -147,10 +177,10 @@ counts — this is the audit trail for how many iterations each field went throu
 
 ## Known Limitations
 
-- **UI is dev-oriented.** The React frontend + FastAPI server (see [Web UI](#web-ui))
-  cover upload/URL/paste, live agent progress, review scores, iteration history,
-  and the final brief. Runs as two local processes with a Vite dev proxy; not
-  yet packaged as a single deployable service.
+- **Frontend and backend deploy separately.** They're two services (a FastAPI web
+  service + a Vite static site, see [Deployment](#deployment)) rather than a single
+  bundle. On a free hosting tier the backend also **cold-starts** after ~15 min idle,
+  so the first request following a nap takes ~30–60s before the agents respond.
 - **PDF extraction has two backends (`PDF_BACKEND`).** Default `pypdf` is light and
   deploy-friendly (no ML deps, instant start) — the right choice for small/free hosted
   instances. `docling` is higher fidelity (layout/table/OCR) but heavy: it pulls in PyTorch

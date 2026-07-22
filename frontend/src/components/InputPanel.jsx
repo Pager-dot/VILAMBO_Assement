@@ -1,3 +1,6 @@
+// InputPanel — the three ways to submit a paper (file upload, URL, pasted text).
+// It only collects input and calls onSubmit({ file | url | text }); App owns the
+// request and everything after it.
 import { useRef, useState } from "react";
 
 const TABS = [

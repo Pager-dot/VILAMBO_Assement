@@ -1,3 +1,16 @@
+/**
+ * App — the whole UI state machine for one analysis.
+ *
+ * Flow:
+ *   idle ──submit──▶ running (RunnerModal steps through the 4 stages, live)
+ *        └▶ done   (RunnerModal shows the peer-review summary + "See brief")
+ *        └▶ result (ResultView: source paper ‖ generated brief, side by side)
+ *
+ * From the result view the user can re-open the modal in "review" mode (the full
+ * agent/sub-agent detail — "what was done") or ask grounded questions about the
+ * paper (AskPanel). All server communication lives in api.js; this component only
+ * translates the streamed SSE events into React state.
+ */
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { fetchGraph, analyze } from "./api.js";
 import InputPanel from "./components/InputPanel.jsx";

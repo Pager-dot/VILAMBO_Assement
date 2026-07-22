@@ -1,3 +1,6 @@
+// AgentCard — one node in the pipeline diagram. Renders its kind, role, live
+// status (pending/running/done), a ×N badge when a sub-agent was retried, and,
+// for reviewer nodes, the latest score with pass/retry styling.
 const KIND_ICON = {
   subagent: "◆",
   reviewer: "◎",

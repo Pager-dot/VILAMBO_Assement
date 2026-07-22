@@ -1,3 +1,19 @@
+"""Assembles the LangGraph pipeline (the orchestration / topology layer).
+
+Shape:
+    metadata → analyzer → review_analysis
+        review_analysis ──(pass)──▶ fan out to three parallel branches:
+            summarizer        → review_summary   ─┐
+            citation_extractor → review_citations ─┼─▶ boss → END
+            key_insights      → review_insights  ─┘
+        review_analysis ──(fail, retries left)──▶ analyzer   (retry)
+
+Each review node is one generic, reusable node (see agents/reviewer.py),
+parameterized by the field it scores. Conditional edges (dashed, at runtime)
+decide retry-vs-proceed from the review scores. Run this module directly
+(`python -m app.graph.build`) to print the mermaid diagram.
+"""
+
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
