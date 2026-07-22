@@ -1,7 +1,13 @@
 // Thin client for the FastAPI backend.
+//
+// In dev, VITE_API_BASE is unset and requests go to "/api/..." which the Vite
+// proxy forwards to localhost:8000. In production, set VITE_API_BASE to the
+// deployed backend URL (e.g. https://vilambo-assement.onrender.com) at build
+// time and requests hit it directly (CORS is open on the server).
+const API_BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/$/, "");
 
 export async function fetchGraph() {
-  const res = await fetch("/api/graph");
+  const res = await fetch(`${API_BASE}/api/graph`);
   if (!res.ok) throw new Error(`Failed to load graph (${res.status})`);
   return res.json();
 }
@@ -17,7 +23,7 @@ export async function analyze(input, onEvent, signal) {
   if (input.url) form.append("url", input.url);
   if (input.text) form.append("text", input.text);
 
-  const res = await fetch("/api/analyze", { method: "POST", body: form, signal });
+  const res = await fetch(`${API_BASE}/api/analyze`, { method: "POST", body: form, signal });
 
   if (!res.ok) {
     let msg = `Request failed (${res.status})`;
