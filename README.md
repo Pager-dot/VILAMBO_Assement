@@ -102,7 +102,7 @@ been retired for new API keys; the file documents what's confirmed working).
 # .txt input
 python -m app.main samples/input/attention_is_all_you_need.txt -o samples/output/attention_brief.md
 
-# PDF input (uses docling for extraction)
+# PDF input (extracted with pypdf by default; set PDF_BACKEND=docling for higher fidelity)
 python -m app.main samples/input/2607.18100v1.pdf -o samples/output/2607.18100v1_brief.md
 
 # print to stdout instead of a file
@@ -135,7 +135,7 @@ counts — this is the audit trail for how many iterations each field went throu
 ## Sample input/output
 
 - Input: `samples/input/attention_is_all_you_need.txt` (small — cheap to test with)
-- Input: `samples/input/2607.18100v1.pdf` (real arXiv PDF, exercises the docling path)
+- Input: `samples/input/2607.18100v1.pdf` (real arXiv PDF, exercises the PDF-extraction path)
 - Output: `samples/output/attention_brief.md`, `samples/output/2607.18100v1_brief.md`
 
 ## Known Limitations
@@ -144,10 +144,12 @@ counts — this is the audit trail for how many iterations each field went throu
   cover upload/URL/paste, live agent progress, review scores, iteration history,
   and the final brief. Runs as two local processes with a Vite dev proxy; not
   yet packaged as a single deployable service.
-- **PDF extraction uses `docling`, not `marker-pdf`.** `marker-pdf` pins an older Pillow
-  that fails to compile from source on Python 3.14; `docling` was swapped in and verified
-  working end-to-end. It's heavier (pulls in layout/table/OCR models and downloads weights
-  from Hugging Face on first run — ~1 minute for a typical paper, cached after).
+- **PDF extraction has two backends (`PDF_BACKEND`).** Default `pypdf` is light and
+  deploy-friendly (no ML deps, instant start) — the right choice for small/free hosted
+  instances. `docling` is higher fidelity (layout/table/OCR) but heavy: it pulls in PyTorch
+  and downloads model weights on first run (~1 min for a typical paper, cached after), and
+  isn't installed by default (`pip install docling` to use it locally). `marker-pdf` was
+  ruled out — it pins an older Pillow that won't compile on Python 3.14.
 - **Context handling is truncation, not chunking.** `MAX_CONTEXT_CHARS` (in `app/config.py`)
   caps how much of the paper text is sent per LLM call. Fine for typical papers; a very
   long paper could lose content past the cutoff rather than being summarized in chunks.
