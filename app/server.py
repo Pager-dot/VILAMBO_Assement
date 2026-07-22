@@ -16,8 +16,10 @@ import httpx
 from fastapi import FastAPI, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel
 
-from app.config import REVIEW_PASS_THRESHOLD, MAX_RETRIES_PER_FIELD
+from app.agents.qa import answer_question
+from app.config import MAX_CONTEXT_CHARS, MAX_RETRIES_PER_FIELD, REVIEW_PASS_THRESHOLD
 from app.graph.build import build_graph
 from app.utils.logging_config import setup_logging
 from app.utils.pdf import extract_text
@@ -187,6 +189,9 @@ def _run_stream(paper_text: str):
             "event": "final",
             "brief": final_brief or "",
             "state": latest,
+            # Full (capped) paper text so the frontend can ask grounded follow-up
+            # questions via /api/ask without the server holding session state.
+            "paper_text": paper_text[:MAX_CONTEXT_CHARS],
         })
     except Exception as exc:  # surface pipeline/LLM errors to the UI
         logger.exception("pipeline failed")
@@ -220,3 +225,23 @@ async def analyze(
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+class AskRequest(BaseModel):
+    paper_text: str
+    question: str
+    selection: str | None = None
+    history: list[dict] | None = None
+
+
+@app.post("/api/ask")
+def ask(req: AskRequest):
+    """Grounded Q&A over an already-analyzed paper (see app/agents/qa.py)."""
+    if not req.paper_text.strip() or not req.question.strip():
+        return JSONResponse(status_code=400, content={"error": "paper_text and question are required."})
+    try:
+        answer = answer_question(req.paper_text, req.question, req.selection, req.history)
+        return {"answer": answer}
+    except Exception as exc:
+        logger.exception("ask failed")
+        return JSONResponse(status_code=500, content={"error": f"{type(exc).__name__}: {exc}"})

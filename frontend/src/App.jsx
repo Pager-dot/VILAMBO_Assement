@@ -3,6 +3,7 @@ import { fetchGraph, analyze } from "./api.js";
 import InputPanel from "./components/InputPanel.jsx";
 import RunnerModal from "./components/RunnerModal.jsx";
 import ResultView from "./components/ResultView.jsx";
+import AskPanel from "./components/AskPanel.jsx";
 
 const PRODUCER_NODES = new Set([
   "metadata",
@@ -55,6 +56,12 @@ export default function App() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("live"); // live | review
 
+  const [paperText, setPaperText] = useState(""); // full text for grounded Q&A
+  const [askOpen, setAskOpen] = useState(false);
+  const [askSelection, setAskSelection] = useState("");
+  const [askAuto, setAskAuto] = useState(""); // auto-sent question (e.g. "Explain")
+  const [askTurns, setAskTurns] = useState([]); // conversation, survives close/open
+
   useEffect(() => {
     fetchGraph()
       .then(setGraph)
@@ -81,6 +88,10 @@ export default function App() {
     setBrief("");
     setError(null);
     setPaperInfo(null);
+    setPaperText("");
+    setAskOpen(false);
+    setAskSelection("");
+    setAskTurns([]);
   }, []);
 
   const handleEvent = useCallback(
@@ -131,6 +142,7 @@ export default function App() {
         case "final":
           setBrief(evt.brief || "");
           setFlags(evt.state?.flags || []);
+          setPaperText(evt.paper_text || "");
           setPhase("done");
           break;
 
@@ -170,6 +182,12 @@ export default function App() {
     },
     [handleEvent, resetRun]
   );
+
+  const openAsk = useCallback((sel = "", auto = "") => {
+    setAskSelection(sel);
+    setAskAuto(auto);
+    setAskOpen(true);
+  }, []);
 
   const running = phase === "running";
   const showResult = brief && !modalOpen;
@@ -218,6 +236,7 @@ export default function App() {
             source={source}
             paperInfo={paperInfo}
             brief={brief}
+            onAsk={openAsk}
             onDetails={() => {
               setModalMode("review");
               setModalOpen(true);
@@ -239,6 +258,18 @@ export default function App() {
           error={error}
           onViewBrief={() => setModalOpen(false)}
           onClose={() => setModalOpen(false)}
+        />
+      )}
+
+      {askOpen && (
+        <AskPanel
+          paperText={paperText}
+          autoQuestion={askAuto}
+          turns={askTurns}
+          setTurns={setAskTurns}
+          selection={askSelection}
+          setSelection={setAskSelection}
+          onClose={() => setAskOpen(false)}
         />
       )}
 

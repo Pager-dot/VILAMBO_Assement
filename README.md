@@ -112,10 +112,17 @@ python -m app.main samples/input/attention_is_all_you_need.txt
 ## Web UI
 
 A React frontend (in `frontend/`) wraps the pipeline: upload a PDF, paste a
-paper URL, or paste raw text, then watch the agents run live — which agent is
-currently active, each review score, the full retry/iteration history, and the
-final brief. It talks to a FastAPI server (`app/server.py`) that streams agent
-progress over Server-Sent Events.
+paper URL, or paste raw text, then watch the agents run live in a stepped popup —
+which agent is currently active, each review score, the full retry/iteration
+history — before the final brief and source paper are shown side by side. It
+talks to a FastAPI server (`app/server.py`) that streams agent progress over
+Server-Sent Events.
+
+You can also **ask grounded questions** about the analyzed paper: highlight any
+text in the brief (or use the "Ask about the paper" button) and the answer comes
+back strictly from the source paper via the `POST /api/ask` endpoint
+(`app/agents/qa.py`) — the frontend keeps the extracted text it received on the
+stream's `final` event, so Q&A needs no server-side session state.
 
 ```bash
 # terminal 1 — API (streams live agent progress)

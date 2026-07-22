@@ -13,6 +13,7 @@ SUMMARIZER_MODEL = os.environ.get("SUMMARIZER_MODEL", "gemini-3.5-flash-lite")
 CITATION_MODEL = os.environ.get("CITATION_MODEL", "gemini-3.5-flash-lite")
 INSIGHTS_MODEL = os.environ.get("INSIGHTS_MODEL", "gemini-3.5-flash-lite")
 REVIEWER_MODEL = os.environ.get("REVIEWER_MODEL", "gemini-3.5-flash-lite")
+QA_MODEL = os.environ.get("QA_MODEL", "gemini-3.5-flash-lite")
 
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 

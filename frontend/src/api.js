@@ -12,6 +12,32 @@ export async function fetchGraph() {
   return res.json();
 }
 
+/** Ask a grounded question about an already-analyzed paper. */
+export async function askQuestion({ paperText, question, selection, history }) {
+  const res = await fetch(`${API_BASE}/api/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      paper_text: paperText,
+      question,
+      selection: selection || null,
+      history: history || null,
+    }),
+  });
+  if (!res.ok) {
+    let msg = `Request failed (${res.status})`;
+    try {
+      const body = await res.json();
+      if (body.error) msg = body.error;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(msg);
+  }
+  const data = await res.json();
+  return data.answer;
+}
+
 /**
  * POST an analysis request and consume the Server-Sent Events stream.
  * `input` is one of { file }, { url }, or { text }.
