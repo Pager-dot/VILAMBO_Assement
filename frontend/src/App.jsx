@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { fetchGraph, analyze } from "./api.js";
 import InputPanel from "./components/InputPanel.jsx";
-import AgentPipeline from "./components/AgentPipeline.jsx";
-import ReviewPanel from "./components/ReviewPanel.jsx";
-import BriefView from "./components/BriefView.jsx";
+import RunnerModal from "./components/RunnerModal.jsx";
+import ResultView from "./components/ResultView.jsx";
 
 const PRODUCER_NODES = new Set([
   "metadata",
@@ -12,6 +11,31 @@ const PRODUCER_NODES = new Set([
   "citation_extractor",
   "key_insights",
 ]);
+
+// Derive what the live Source viewer should show from the submitted input.
+async function buildSource(input) {
+  if (input.file) {
+    const f = input.file;
+    const isPdf = /\.pdf$/i.test(f.name) || f.type === "application/pdf";
+    if (isPdf) return { kind: "pdf", url: URL.createObjectURL(f), name: f.name, blob: true };
+    let text = "";
+    try {
+      text = await f.text();
+    } catch {
+      /* ignore */
+    }
+    return { kind: "text", text, name: f.name };
+  }
+  if (input.url) {
+    let u = input.url.trim();
+    const abs = u.match(/arxiv\.org\/abs\/(.+?)\/?$/i);
+    if (abs) u = `https://arxiv.org/pdf/${abs[1]}`;
+    const isPdf = /\.pdf(\?|$)/i.test(u) || /arxiv\.org\/pdf\//i.test(u);
+    return { kind: isPdf ? "pdf" : "web", url: u, original: input.url.trim() };
+  }
+  if (input.text) return { kind: "text", text: input.text };
+  return null;
+}
 
 export default function App() {
   const [graph, setGraph] = useState(null);
@@ -25,6 +49,11 @@ export default function App() {
   const [brief, setBrief] = useState("");
   const [error, setError] = useState(null);
   const [paperInfo, setPaperInfo] = useState(null); // { chars, preview }
+  const [source, setSource] = useState(null); // live viewer source
+  const sourceUrlRef = useRef(null); // object URL to revoke on the next run
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("live"); // live | review
 
   useEffect(() => {
     fetchGraph()
@@ -120,6 +149,18 @@ export default function App() {
   const onSubmit = useCallback(
     async (input) => {
       resetRun();
+      setModalMode("live");
+      setModalOpen(true);
+
+      // Free the previous PDF blob URL before making a new one.
+      if (sourceUrlRef.current) {
+        URL.revokeObjectURL(sourceUrlRef.current);
+        sourceUrlRef.current = null;
+      }
+      const src = await buildSource(input);
+      if (src?.blob) sourceUrlRef.current = src.url;
+      setSource(src);
+
       try {
         await analyze(input, handleEvent);
       } catch (e) {
@@ -131,6 +172,7 @@ export default function App() {
   );
 
   const running = phase === "running";
+  const showResult = brief && !modalOpen;
 
   return (
     <div className="app">
@@ -163,8 +205,7 @@ export default function App() {
       {graphError && (
         <div className="wrap">
           <div className="alert error">
-            Could not reach the API: {graphError}. Is the backend running on
-            :8000? (<code>uvicorn app.server:app --port 8000</code>)
+            Could not reach the API: {graphError}.
           </div>
         </div>
       )}
@@ -172,29 +213,34 @@ export default function App() {
       <main className="wrap">
         <InputPanel onSubmit={onSubmit} running={running} paperInfo={paperInfo} />
 
-        {phase !== "idle" && (
-          <>
-            <AgentPipeline
-              nodes={graph?.nodes ?? []}
-              nodeState={nodeState}
-              scores={scores}
-              threshold={threshold}
-              phase={phase}
-            />
-
-            <ReviewPanel
-              history={history}
-              scores={scores}
-              threshold={threshold}
-              flags={flags}
-            />
-
-            {error && <div className="alert error">{error}</div>}
-
-            {(brief || phase === "done") && <BriefView brief={brief} />}
-          </>
+        {showResult && (
+          <ResultView
+            source={source}
+            paperInfo={paperInfo}
+            brief={brief}
+            onDetails={() => {
+              setModalMode("review");
+              setModalOpen(true);
+            }}
+          />
         )}
       </main>
+
+      {modalOpen && (
+        <RunnerModal
+          phase={phase}
+          mode={modalMode}
+          nodes={graph?.nodes ?? []}
+          nodeState={nodeState}
+          scores={scores}
+          history={history}
+          threshold={threshold}
+          flags={flags}
+          error={error}
+          onViewBrief={() => setModalOpen(false)}
+          onClose={() => setModalOpen(false)}
+        />
+      )}
 
       <footer className="foot">
         Built for the Vilambo AI Agent Developer Intern assignment · LangGraph ·
