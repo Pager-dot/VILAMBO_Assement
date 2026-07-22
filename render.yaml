@@ -1,0 +1,20 @@
+# Render Blueprint — defines the backend web service.
+# Deploy via Render dashboard: New + → Blueprint → pick this repo.
+# (Or configure a Web Service manually with the same build/start commands.)
+services:
+  - type: web
+    name: research-paper-analyzer-api
+    runtime: python
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/graph
+    envVars:
+      # Set this in the Render dashboard — never commit the key.
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: PDF_BACKEND
+        value: pypdf
+      - key: LOG_LEVEL
+        value: INFO
